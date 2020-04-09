@@ -33,15 +33,17 @@ class Epidem:
     _num_school_policies = 0
     _num_social_dist_policies = 0
 
-    def open_file(self,file_path):
-        return  h5py.File(file_path,'r')
-
+    
     def __init__(self,filepath=None):
         super().__init__()
         if filepath is None:
             pass
         else:
-            _root_group = open_file(filepath,'r')
+            self._root_group = self.open_file(filepath)
+
+    def open_file(self,file_path):
+        return  h5py.File(file_path,'r')
+
     def parse_metadata(self):
         """Parses the file metadata. Collects groups and datasets in the root group
 
@@ -54,34 +56,36 @@ class Epidem:
         Once populated data in key datasets needed to produce output are extracted from the
         information in the dictionaries.
         """
-        for name,value in _root_group.items():
+        for name,value in self._root_group.items():
             if isinstance(value,h5py.Group):
-                _groups[name] = value
+               self._groups[name] = value
             else:
-                _datasets[name] = value
-            # extract run counts
-            _num_scenarios       = _datasets['Run_scenario_end'][()].astype('int')[0][0]
-            _num_school_policies = _datasets['Run_school_end'][()].astype('int')[0][0]
-            _num_social_dist_policies = _datasets['Run_social_distance_end'][()].astype('int')[0][0]
-            _num_sto_times = _datasets['RunStoTimes_end'][()].astype('int')[0][0]
-            # extract focus vectors - convert to python list
-            _scenario_focus = (_datasets['Run_scenario_Focus'][()].T).astype('int')[0].tolist()
-            _school_focus = (_datasets['Run_school_Focus'][()].T).astype('int')[0].tolist()
-            _social_distance_focus = (_datasets['Run_social_distance_Focus'][()].T).astype('int')[0].tolist()
-            # extract full case matrix - store as pandas dataset
-            sInd2 = _datasets['strategyInd2'][()]
-            cols = ['CUPi','scen','schl','sodi','stoT']
-            _case_matrix_df = pd.DataFrame(sInd2.T.astype('int'),columns = cols) 
-            # pull the rows of case matrix corresponding to the focus matrix
-            logicv = pd.series([ False for i in range(_case_matrix_df.shape[0])])
-            tempsc = logicv.copy()
-            for x in _scenario_focus:
-                tempsc = tempsc | (_case_matrix_df['scen'] == x)
-            tempsch = logicv.copy()
-            for x in _school_focus:
-                tempsch = tempsch | (_case_matrix_df['schl'] == x)
-            tempsdi = logicv.copy()
-            for x in _social_distance_focus:
-                tempsdi = tempsdi | (_case_matrix_df['sodi'] == x)
-            _focus_matrix_df = _case_matrix_df[tempsc & tempsch & tempsdi]
-            return len(_groups),len(_datasets)
+                self._datasets[name] = value
+        print(f'{self._datasets.keys}')
+        # extract run counts
+        self._num_scenarios       = self._datasets['Run_scenario_end'][()].astype('int')[0][0]
+        self._num_school_policies = self._datasets['Run_school_end'][()].astype('int')[0][0]
+        self._num_social_dist_policies = self._datasets['Run_social_distance_end'][()].astype('int')[0][0]
+        self._num_sto_times = self._datasets['RunStoTimes_end'][()].astype('int')[0][0]
+        # extract focus vectors - convert to python list
+        self._scenario_focus = (self._datasets['Run_scenario_Focus'][()].T).astype('int')[0].tolist()
+        self._school_focus = (self._datasets['Run_school_Focus'][()].T).astype('int')[0].tolist()
+        self._social_distance_focus = (self._datasets['Run_social_distance_Focus'][()].T).astype('int')[0].tolist()
+        # extract full case matrix - store as pandas dataset
+        sInd2 = self._datasets['strategyInd2'][()]
+        cols = ['CUPi','scen','schl','sodi','stoT']
+        self._case_matrix_df = pd.DataFrame(sInd2.T.astype('int'),columns = cols) 
+        # pull the rows of case matrix corresponding to the focus matrix
+        logicv = pd.Series([ False for i in range(self._case_matrix_df.shape[0])])
+        tempsc = logicv.copy()
+        for x in self._scenario_focus:
+            tempsc = tempsc | (self._case_matrix_df['scen'] == x)
+        tempsch = logicv.copy()
+        for x in self._school_focus:
+            tempsch = tempsch | (self._case_matrix_df['schl'] == x)
+        tempsdi = logicv.copy()
+        for x in self._social_distance_focus:
+            tempsdi = tempsdi | (self._case_matrix_df['sodi'] == x)
+        self._focus_matrix_df = self._case_matrix_df[tempsc & tempsch & tempsdi]
+        print(f'{self._focus_matrix_df}')
+        return len(self._groups),len(self._datasets)
