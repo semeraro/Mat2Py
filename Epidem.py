@@ -32,16 +32,16 @@ class Epidem:
     _num_scenarios = 0
     _num_school_policies = 0
     _num_social_dist_policies = 0
+
+    def open_file(self,file_path):
+        return  h5py.File(file_path,'r')
+
     def __init__(self,filepath=None):
         super().__init__()
         if filepath is None:
             pass
         else:
             _root_group = open_file(filepath,'r')
-
-    def open_file(self,file_path):
-        return = hdf5.File(file_path,'r')
-
     def parse_metadata(self):
         """Parses the file metadata. Collects groups and datasets in the root group
 
