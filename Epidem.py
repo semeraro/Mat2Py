@@ -32,8 +32,12 @@ class Epidem:
     _num_scenarios = 0
     _num_school_policies = 0
     _num_social_dist_policies = 0
+    _scenario_focus = None
+    _school_focus = None
+    _social_distance_focus = None
+    _case_matrix_df = None
+    _focus_matrix_df = None
 
-    
     def __init__(self,filepath=None):
         super().__init__()
         if filepath is None:
@@ -61,7 +65,7 @@ class Epidem:
                self._groups[name] = value
             else:
                 self._datasets[name] = value
-        print(f'{self._datasets.keys}')
+        print(f'{self._datasets.keys()}')
         # extract run counts
         self._num_scenarios       = self._datasets['Run_scenario_end'][()].astype('int')[0][0]
         self._num_school_policies = self._datasets['Run_school_end'][()].astype('int')[0][0]
@@ -87,5 +91,19 @@ class Epidem:
         for x in self._social_distance_focus:
             tempsdi = tempsdi | (self._case_matrix_df['sodi'] == x)
         self._focus_matrix_df = self._case_matrix_df[tempsc & tempsch & tempsdi]
-        print(f'{self._focus_matrix_df}')
+        # Get a handle on the actual data
+        self._Fitness = self._root_group['FitnessEs3']
+        #parse out the focus matrix data. Examine parts of Fitness that
+        #match the rows of the focus matrix. Build an outcomes dataframe
+        #append the output columns to the focus matrix dataframe.
+        outrow = []
+        outcomes = []
+        for CUPi in (self._focus_matrix_df['CUPi'].values - 1):
+            CUPidataset = self._root_group[self._Fitness[CUPi][0]]
+            for item in CUPidataset[()].tolist():
+                for i in item:
+                    outrow.append(self._root_group[i][()])
+                outcomes.append(outrow) 
+        outcomedf = pd.DataFrame(outcomes)
+        print(f'{outcomedf} thing')
         return len(self._groups),len(self._datasets)

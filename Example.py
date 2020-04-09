@@ -7,4 +7,4 @@ sys.path.append(modulepath)
 from Mat2Py.Epidem import Epidem 
 filespec = "..\..\DATA\Matlab\Multi_v2_Full_COVID_cpuNum_30_March_24_737874.2655.mat"
 thing = Epidem(filepath = filespec)
-print(f'{filespec} has {grps} groups and {dsts} datasets')
+thing.parse_metadata()
