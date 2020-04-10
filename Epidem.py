@@ -11,11 +11,12 @@ simulation.
 
 import h5py
 import pandas as pd
+import numpy as np
 class Epidem:
     """
     A container class for epidemiological data.
 
-    Attrobites
+    Attributes
     ----------
     Filepath : str
         fill path to a .mat file
@@ -26,20 +27,26 @@ class Epidem:
         reads the file in filepath or the one passed in
     """
 
-    _root_group = None
-    _groups = {}
-    _datasets = {}
-    _num_scenarios = 0
-    _num_school_policies = 0
-    _num_social_dist_policies = 0
-    _scenario_focus = None
-    _school_focus = None
-    _social_distance_focus = None
-    _case_matrix_df = None
-    _focus_matrix_df = None
 
     def __init__(self,filepath=None):
         super().__init__()
+        self._root_group = None
+        self._groups = {}
+        self._datasets = {}
+        self._num_scenarios = 0
+        self._num_school_policies = 0
+        self._num_social_dist_policies = 0
+        self._scenario_focus = None
+        self._school_focus = None
+        self._social_distance_focus = None
+        self._case_matrix_df = None
+        self._focus_matrix_df = None
+        self._outcome_df = None
+        self._outcome_points = 0
+        self._outcome_locations = 0
+        self._outcome_risks = 0
+        self._outcome_ages = 0
+        self._number_of_outcomes = 0
         if filepath is None:
             pass
         else:
@@ -51,7 +58,8 @@ class Epidem:
     def parse_metadata(self):
         """Parses the file metadata. Collects groups and datasets in the root group
 
-        This method parses the high level attributes in the .mat file. It populates some
+        There is no metadata. The metadata stored in the class is derived from the contents
+        of the file. This method parses the high level attributes in the .mat file. It populates some
         class metadata variables. The method populates two dictionaries _groups, and _datasets. 
         each element in the dict is a key value pair with the dataset name as key and the
         value of the dataset as the value. The dataset may contain a single scalar or numpy
@@ -65,7 +73,6 @@ class Epidem:
                self._groups[name] = value
             else:
                 self._datasets[name] = value
-        print(f'{self._datasets.keys()}')
         # extract run counts
         self._num_scenarios       = self._datasets['Run_scenario_end'][()].astype('int')[0][0]
         self._num_school_policies = self._datasets['Run_school_end'][()].astype('int')[0][0]
@@ -100,16 +107,53 @@ class Epidem:
         outcomes = {} # dictionary of rows of names
         for CUPi in (self._focus_matrix_df['CUPi'].values - 1):
             CUPidataset = self._root_group[self._Fitness[CUPi][0]]
-            print(f'{CUPi} {CUPidataset.name}')
+            #print(f'{CUPi} {CUPidataset.name}')
             for item in CUPidataset[()].tolist():
                 subname = self._root_group[item[0]].name
-                #print(f'{subname} {self._root_group[subname]}')
                 outrow.append(subname)
-                #for i in item:
-                #    outrow.append(self._root_group[i])
             outcomes[CUPi+1] = outrow.copy()
             outrow.clear()
-        print(f'{outcomes}')
-        outcomedf = pd.DataFrame(outcomes).T # dataframe of datasets
-        print(f'{outcomedf} thing')
-        return len(self._groups),len(self._datasets)
+        self._outcome_df = pd.DataFrame(outcomes).T # dataframe of datasets names
+        self._number_of_outcomes = self._outcome_df.shape[1]
+        #print(f'{self._outcome_df} outcome_df shape')
+        # Now we need the shape of an outcome so we can populate the
+        # risks, age groups, locations, and points.
+        # use the last subname 
+        temp = self._root_group[subname]
+        self._outcome_risks = temp.shape[0]
+        self._outcome_ages = temp.shape[1]
+        self._outcome_locations = temp.shape[2]
+        self._outcome_points = temp.shape[3]
+        # load tempMG the list of CBSA codes
+        self._CBSA_codes = self._root_group['tempMG'][()].astype('int')[0]
+    ##
+    def _CBSA_index(self,CBSA):
+        """Returns the index into the tempMG array of the given CBSA
+        The index is decremented by one to account for c style indexint
+        """
+        return np.where(self._CBSA_codes == CBSA)[0][0] -1 # c indexing
+    ###
+    def get_outcome(self,outcome,scen,school,sodi,risk,age,location):
+        """Return a dataframe with the desired contents
+
+        outcome - outcome number 
+        scen - scenario number
+        school - school policy
+        sodi - social distance policy
+        risk  - risk number whatever that is
+        age - age group number
+        location - location number
+
+        The data are assembled based on the content of the passed parameters. Data
+        summation occures for multiple values of a parameter. """
+        # find run CUPi by combination of scen,school,sodi
+        fmdf = self._focus_matrix_df
+        logicv = (fmdf['scen'] == scen) & (fmdf['schl'] == school) & (fmdf['sodi'] == sodi)
+        CUProw = self._focus_matrix_df[logicv]['CUPi'].values[0]
+        #get the dataset associated with the CUProw and outcome number
+        outcomedsname = self._outcome_df.loc[CUProw][0]
+        #print(f'{outcomedsname}')
+        outcomedataset = self._root_group[outcomedsname][()]
+        city_index = self._CBSA_index(location)
+        thisoutcome = outcomedataset[risk,age,city_index,:]
+        return pd.DataFrame(thisoutcome)
