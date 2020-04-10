@@ -96,14 +96,20 @@ class Epidem:
         #parse out the focus matrix data. Examine parts of Fitness that
         #match the rows of the focus matrix. Build an outcomes dataframe
         #append the output columns to the focus matrix dataframe.
-        outrow = []
-        outcomes = []
+        outrow = [] # row of subdataset names of dataset associated with CUPi
+        outcomes = {} # dictionary of rows of names
         for CUPi in (self._focus_matrix_df['CUPi'].values - 1):
             CUPidataset = self._root_group[self._Fitness[CUPi][0]]
+            print(f'{CUPi} {CUPidataset.name}')
             for item in CUPidataset[()].tolist():
-                for i in item:
-                    outrow.append(self._root_group[i][()])
-                outcomes.append(outrow) 
-        outcomedf = pd.DataFrame(outcomes)
+                subname = self._root_group[item[0]].name
+                #print(f'{subname} {self._root_group[subname]}')
+                outrow.append(subname)
+                #for i in item:
+                #    outrow.append(self._root_group[i])
+            outcomes[CUPi+1] = outrow.copy()
+            outrow.clear()
+        print(f'{outcomes}')
+        outcomedf = pd.DataFrame(outcomes).T # dataframe of datasets
         print(f'{outcomedf} thing')
         return len(self._groups),len(self._datasets)
