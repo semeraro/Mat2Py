@@ -51,6 +51,7 @@ class Epidem:
             pass
         else:
             self._root_group = self.open_file(filepath)
+            self.parse_metadata()
 
     def open_file(self,file_path):
         return  h5py.File(file_path,'r')

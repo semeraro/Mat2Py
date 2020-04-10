@@ -8,7 +8,7 @@ sys.path.append(modulepath)
 from Mat2Py.Epidem import Epidem 
 filespec = "..\..\DATA\Matlab\Multi_v2_Full_COVID_cpuNum_30_March_24_737874.2655.mat"
 thing = Epidem(filepath = filespec)
-thing.parse_metadata()
+#thing.parse_metadata()
 outcome =0
 scenario = 6
 school_policy = 10
