@@ -116,7 +116,7 @@ class Epidem:
             outrow.clear()
         self._outcome_df = pd.DataFrame(outcomes).T # dataframe of datasets names
         self._number_of_outcomes = self._outcome_df.shape[1]
-        #print(f'{self._outcome_df} outcome_df shape')
+        print(f'{self._outcome_df} outcome_df shape')
         # Now we need the shape of an outcome so we can populate the
         # risks, age groups, locations, and points.
         # use the last subname 
@@ -152,8 +152,8 @@ class Epidem:
         logicv = (fmdf['scen'] == scen) & (fmdf['schl'] == school) & (fmdf['sodi'] == sodi)
         CUProw = self._focus_matrix_df[logicv]['CUPi'].values[0]
         #get the dataset associated with the CUProw and outcome number
-        outcomedsname = self._outcome_df.loc[CUProw][0]
-        #print(f'{outcomedsname}')
+        outcomedsname = self._outcome_df.loc[CUProw][outcome]
+        print(f'{outcomedsname}')
         outcomedataset = self._root_group[outcomedsname][()]
         city_index = self._CBSA_index(location)
         thisoutcome = outcomedataset[risk,age,city_index,:]
