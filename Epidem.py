@@ -162,7 +162,9 @@ class Epidem:
             #index into the location vector.
             city_index = self._CBSA_index(location)
             #assemble the data from the dataset.
-            thisoutcome = outcomedataset[risk,age,city_index,:]
-            return pd.DataFrame(thisoutcome)
+            thisoutcome = outcomedataset[risk,age,city_index,:].T
+            cols = [str(item) for item in age]
+            print(cols)
+            return pd.DataFrame(thisoutcome,columns = cols)
         else:
             raise ValueError

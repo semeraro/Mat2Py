@@ -13,10 +13,10 @@ scenario = 6
 school_policy = 10
 social_distancing = 2
 risk = 1
-age_group = (3,4)
+age_group = (0,1,2,3,4)
 location = 35620
 index = thing.get_outcome(outcome,scenario,school_policy,social_distancing,risk,age_group,location)
 
 print(f'{index}')
-index.T.plot()
+index.plot()
 plt.show()
