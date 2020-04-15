@@ -54,6 +54,18 @@ class Epidem:
             self.parse_metadata()
     
     @property
+    def Scenarios(self):
+        return self._scenario_focus
+    
+    @property
+    def SchoolPolicies(self):
+        return self._school_focus
+
+    @property
+    def SocialDistancePolicies(self):
+        return self._social_distance_focus
+
+    @property
     def NumberOfOutcomes(self):
         return self._number_of_outcomes
     
@@ -72,8 +84,7 @@ class Epidem:
     @property
     def NumberOfDataPoints(self):
         return self._outcome_points
-        
-    
+
     @property
     def NumberOfScenarios(self):
         return self._num_scenarios
