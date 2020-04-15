@@ -52,6 +52,61 @@ class Epidem:
         else:
             self._root_group = self.open_file(filepath)
             self.parse_metadata()
+    
+    @property
+    def NumberOfOutcomes(self):
+        return self._number_of_outcomes
+    
+    @property
+    def NumberOfAgegroups(self):
+        return self._outcome_ages
+
+    @property
+    def NumberOfRisks(self):
+        return self._outcome_risks
+
+    @property
+    def NumberOfLocations(self):
+        return self._outcome_locations
+    
+    @property
+    def NumberOfDataPoints(self):
+        return self._outcome_points
+        
+    
+    @property
+    def NumberOfScenarios(self):
+        return self._num_scenarios
+
+    @property
+    def NumberOfSchoolPolicies(self):
+        return self._num_school_policies
+
+    @property
+    def NumberOfSocDistPolicies(self):
+        return self._num_social_dist_policies
+
+    @property
+    def NumberOfFocusScenarios(self):
+        if self._scenario_focus is none:
+            return 0
+        else:
+            return len(self._scenario_focus)
+
+    @property
+    def NumberOfFocusSchoolPolicies(self):
+        if self._school_focus is None:
+            return 0
+        else:
+            return len(self._school_focus)
+
+    @property
+    def NumberOfFocusSocDistPolicies(self):
+        if self._social_distance_focus is None:
+            return 0
+        else:
+            return len(self._social_distance_focus)
+
 
     def open_file(self,file_path):
         return  h5py.File(file_path,'r')
