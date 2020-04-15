@@ -12,6 +12,8 @@ simulation.
 import h5py
 import pandas as pd
 import numpy as np
+import os
+from collections import Iterable 
 class Epidem:
     """
     A container class for epidemiological data.
@@ -47,16 +49,35 @@ class Epidem:
         self._outcome_risks = 0
         self._outcome_ages = 0
         self._number_of_outcomes = 0
+        self._Filename = ""
+        self._stoFlag = 0
+        self._num_stochastic_iterations = 1
         if filepath is None:
             pass
         else:
+            self._filename = os.path.basename(filepath)
             self._root_group = self.open_file(filepath)
             self.parse_metadata()
-    
+    def __repr__(self):
+        return (f'{self.__class__.__name__}('f'{self._Filename!r}')
+
+    def __str__(self):
+       return  f'Stats: \n\t{"Outcomes":<21}{self.NumberOfOutcomes:>10} \
+       \n\t{"Risks":<21}{self.NumberOfRisks:>10}\n\t{"Age Groups":<21}{self.NumberOfAgegroups:>10} \
+       \n\t{"Cities":21}{self.NumberOfLocations:>10}\n\t{"Data Points":<21}{self.NumberOfDataPoints:>10} \
+       \n\t{"Stochastic Iterations":>21}{self.NumberOfStochasticIterations:>10} \
+       \nPolicies: \n\t{"School":<21}{self.NumberOfSchoolPolicies:>10} \
+       \n\t{"Social Distance":<21}{self.NumberOfSocDistPolicies:>10}\n\t{"Scenarios":<21}{self.NumberOfScenarios:>10} \
+       \n{"Available Policies:":<21}\n\t{"School":<21}{self.NumberOfFocusSchoolPolicies:>10} \
+       \n\t{"Social Distance":<21}{self.NumberOfFocusSocDistPolicies:>10}\n\t{"Scenarios":<21}{self.NumberOfFocusScenarios:>10}'
+
     @property
     def Scenarios(self):
         return self._scenario_focus
     
+    @property
+    def Filename(self):
+        return self._filename
     @property
     def SchoolPolicies(self):
         return self._school_focus
@@ -82,6 +103,10 @@ class Epidem:
         return self._outcome_locations
     
     @property
+    def NumberOfStochasticIterations(self):
+        return self._num_stochastic_iterations
+
+    @property
     def NumberOfDataPoints(self):
         return self._outcome_points
 
@@ -99,7 +124,7 @@ class Epidem:
 
     @property
     def NumberOfFocusScenarios(self):
-        if self._scenario_focus is none:
+        if self._scenario_focus is None:
             return 0
         else:
             return len(self._scenario_focus)
@@ -144,7 +169,8 @@ class Epidem:
         self._num_scenarios       = self._datasets['Run_scenario_end'][()].astype('int')[0][0]
         self._num_school_policies = self._datasets['Run_school_end'][()].astype('int')[0][0]
         self._num_social_dist_policies = self._datasets['Run_social_distance_end'][()].astype('int')[0][0]
-        self._num_sto_times = self._datasets['RunStoTimes_end'][()].astype('int')[0][0]
+        self._num_stochastic_iterations = self._datasets['RunStoTimes_end'][()].astype('int')[0][0]
+        self._stoFlag = self._datasets['stoFlag'][()].astype('int')[0][0]
         # extract focus vectors - convert to python list
         self._scenario_focus = (self._datasets['Run_scenario_Focus'][()].T).astype('int')[0].tolist()
         self._school_focus = (self._datasets['Run_school_Focus'][()].T).astype('int')[0].tolist()
@@ -213,24 +239,47 @@ class Epidem:
 
         The data are assembled based on the content of the passed parameters. Data
         summation occures for multiple values of a parameter. """
+        #index into the location vector.
+        city_index = self._CBSA_index(location)
         # find run CUPi by combination of scen,school,sodi
         fmdf = self._focus_matrix_df
         # test to see if the input to the function is valid
         if (scen in self._scenario_focus) & (school in self._school_focus) & (sodi in self._social_distance_focus) :
             logicv = (fmdf['scen'] == scen) & (fmdf['schl'] == school) & (fmdf['sodi'] == sodi)
             CUProw = self._focus_matrix_df[logicv]['CUPi'].values[0]
-            #get the dataset associated with the CUProw and outcome number
-            outcomedsname = self._outcome_df.loc[CUProw][outcome]
-            #print(f'{outcomedsname}')
-            #get the value of the dataset associated with the outcomedsname
-            outcomedataset = self._root_group[outcomedsname][()]
-            outcomedataset[np.isnan(outcomedataset)] = 0
-            #index into the location vector.
-            city_index = self._CBSA_index(location)
-            #assemble the data from the dataset.
-            thisoutcome = outcomedataset[risk,age,city_index,:].T
-            cols = [str(item) for item in age]
-            print(cols)
-            return pd.DataFrame(thisoutcome,columns = cols)
+            #get the dataset names associated with the CUProw 
+            #outcomedsnames is a pandas series
+            outcomedsnames = self._outcome_df.loc[CUProw]
+            print(f'{outcomedsnames} {type(outcomedsnames)}')
+            #select only the outcomes we are interested in
+            #handle non iterable outcome
+            if isinstance(outcome,Iterable):
+                outcomedsnames = outcomedsnames.take(outcome)
+                outcome_cols = [str(item) for item in outcome]
+            else:
+                outcomedsnames = outcomedsnames.take([outcome])
+                outcome_cols = [str(outcome)]
+            print(f'{outcomedsnames}')
+            #iterate over the dataset nemes and pull data
+            for index,name in outcomedsnames.iteritems():
+                #grab some data
+                outcomedataset = self._root_group[name][()]
+                #outcomedataset is a numpy array; clean it
+                outcomedataset[np.isnan(outcomedataset)] = 0
+                #assemble the data from the dataset.
+                if age is None: # sum on the second index
+                    print(outcomedataset[risk,:,city_index,:].shape)
+                    thisoutcome = np.sum(outcomedataset[risk,:,city_index,:],axis=0)
+                else: #retain the age columns
+                    thisoutcome = outcomedataset[risk,age,city_index,:].T
+                    if isinstance(age,Iterable):
+                        age_cols = [str(item) for item in age]
+                    else:
+                        age_cols = [str(age)]
+                print(thisoutcome.shape)
+                #append these columns to the pandas dataframe
+                #as outcome number index. Use Multiindex
+                #dataset when there are multiple age columns
+                #return pd.DataFrame(thisoutcome,columns = cols)
         else:
             raise ValueError
