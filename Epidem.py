@@ -251,7 +251,7 @@ class Epidem:
             #get the dataset names associated with the CUProw 
             #outcomedsnames is a pandas series
             outcomedsnames = self._outcome_df.loc[CUProw]
-            print(f'{outcomedsnames} {type(outcomedsnames)}')
+            #print(f'{outcomedsnames} {type(outcomedsnames)}')
             #select only the outcomes we are interested in
             #handle non iterable outcome
             if isinstance(outcome,Iterable):
@@ -260,7 +260,7 @@ class Epidem:
             else:
                 outcomedsnames = outcomedsnames.take([outcome])
                 outcome_cols = [str(outcome)]
-            print(f'{outcomedsnames}')
+            #print(f'{outcomedsnames}')
             #iterate over the dataset nemes and pull data
             #this section gets data and arranges it by outcome and
             #age group. If age group is None the data for all the age
@@ -276,9 +276,10 @@ class Epidem:
                 outcomedataset[np.isnan(outcomedataset)] = 0
                 #assemble the data from the dataset.
                 if age is None: # sum on the second index.This is the simple case
-                    print(outcomedataset[risk,:,city_index,:].shape)
+                    #print(outcomedataset[risk,:,city_index,:].shape)
                     thisoutcome = np.sum(outcomedataset[risk,:,city_index,:],axis=0)
-                    output_dataframe[f'outcome{index}'] = thisoutcome.tolist()
+                    subframe = pd.DataFrame(data=thisoutcome,columns=[f'outcome{index}'])
+                    #output_dataframe[f'outcome{index}'] = thisoutcome.tolist()
                 else: #retain the age columns. Multi index across columns
                     thisoutcome = outcomedataset[risk,age,city_index,:].T
                     if isinstance(age,Iterable):
@@ -287,8 +288,8 @@ class Epidem:
                         age_cols = [f'age_group{str(age)}']
                     subframecolindex = pd.MultiIndex.from_product([[f'outcome{index}'],age_cols])
                     subframe = pd.DataFrame(data=thisoutcome,columns = subframecolindex)
-                    output_dataframe = pd.concat([output_dataframe,subframe],axis=1)
-                print(thisoutcome.shape)
+                output_dataframe = pd.concat([output_dataframe,subframe],axis=1)
+                #print(thisoutcome.shape)
                 #append these columns to the pandas dataframe
                 #as outcome number index. Use Multiindex
                 #dataset when there are multiple age columns

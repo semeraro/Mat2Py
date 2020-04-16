@@ -18,6 +18,6 @@ age_group = None
 location = 35620
 index = run.get_outcome(outcome,scenario,school_policy,social_distancing,risk,age_group,location)
 
-print(f'{index}')
+print(f'{index.shape}')
 #index.plot()
 #plt.show()
