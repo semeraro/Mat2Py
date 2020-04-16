@@ -239,6 +239,7 @@ class Epidem:
 
         The data are assembled based on the content of the passed parameters. Data
         summation occures for multiple values of a parameter. """
+        output_dataframe = pd.DataFrame() #empty dataframe
         #index into the location vector.
         city_index = self._CBSA_index(location)
         # find run CUPi by combination of scen,school,sodi
@@ -261,21 +262,32 @@ class Epidem:
                 outcome_cols = [str(outcome)]
             print(f'{outcomedsnames}')
             #iterate over the dataset nemes and pull data
+            #this section gets data and arranges it by outcome and
+            #age group. If age group is None the data for all the age
+            #groups are summed. The output is a dataframe of counts
+            #for each outcome
+            #
+            #If not the result is a multiindex columnar data
+            #with outcome columns and age group subcolumns
             for index,name in outcomedsnames.iteritems():
                 #grab some data
                 outcomedataset = self._root_group[name][()]
                 #outcomedataset is a numpy array; clean it
                 outcomedataset[np.isnan(outcomedataset)] = 0
                 #assemble the data from the dataset.
-                if age is None: # sum on the second index
+                if age is None: # sum on the second index.This is the simple case
                     print(outcomedataset[risk,:,city_index,:].shape)
                     thisoutcome = np.sum(outcomedataset[risk,:,city_index,:],axis=0)
-                else: #retain the age columns
+                    output_dataframe[f'outcome{index}'] = thisoutcome.tolist()
+                else: #retain the age columns. Multi index across columns
                     thisoutcome = outcomedataset[risk,age,city_index,:].T
                     if isinstance(age,Iterable):
-                        age_cols = [str(item) for item in age]
+                        age_cols = [f'age_group{str(item)}' for item in age]
                     else:
-                        age_cols = [str(age)]
+                        age_cols = [f'age_group{str(age)}']
+                    subframecolindex = pd.MultiIndex.from_product([[f'outcome{index}'],age_cols])
+                    subframe = pd.DataFrame(data=thisoutcome,columns = subframecolindex)
+                    output_dataframe = pd.concat([output_dataframe,subframe],axis=1)
                 print(thisoutcome.shape)
                 #append these columns to the pandas dataframe
                 #as outcome number index. Use Multiindex
@@ -283,3 +295,4 @@ class Epidem:
                 #return pd.DataFrame(thisoutcome,columns = cols)
         else:
             raise ValueError
+        return output_dataframe
