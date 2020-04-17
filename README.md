@@ -3,7 +3,7 @@ A python package for reading specific matlab mat files from specific simulations
 
 >The contents of the package are not guaranteed to work. (Now warranty expressed or implied). The output of the simulations can and often does change over time. The python objects are not meant to be *full featured* in that some content in the matfile may not be read by the reader. Some effort will be made to keep the readers up to date as time allows. 
 
-
+See the python notebook associated with the module for example use.
 
 ## Depends 
 
@@ -13,5 +13,5 @@ A python package for reading specific matlab mat files from specific simulations
 
 ## Modules
 
-1. COVID2DataFrame - Python objects that read the output of a Matlab epidemiology code from the Meyers Lab at University of Texas.  
+1. Epidem - Python objects that read the output of a Matlab epidemiology code from the Meyers Lab at University of Texas.  
 
