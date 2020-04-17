@@ -6,8 +6,12 @@ import matplotlib.pyplot as plt
 modulepath = os.getcwd() + '\..'
 sys.path.append(modulepath)
 from Mat2Py.Epidem import Epidem 
+#This is the path to the input file. 
+#Point to your mat file
 filespec = "..\..\DATA\Matlab\Multi_v2_Full_COVID_cpuNum_30_March_24_737874.2655.mat"
+#Instantiate the Epidem object
 run = Epidem(filepath = filespec)
+#Set the input parameters
 outcome = [item for item in range(run.NumberOfOutcomes)]
 outcome = (0,1,2)
 scenario = run.Scenarios[0]
@@ -16,7 +20,9 @@ social_distancing = run.SocialDistancePolicies[0]
 risk = run.NumberOfRisks - 1
 age_group = (0,1,2,3,4)
 location = 35620
+#Call the get_outcome method
 index = run.get_outcome(outcome,scenario,school_policy,social_distancing,risk,age_group,location)
-#print(f'{index}')
+#Use the resulting dataframe
+# #print(f'{index}')
 #index.plot()
 #plt.show()
