@@ -14,10 +14,9 @@ scenario = run.Scenarios[0]
 school_policy = run.SchoolPolicies[-1]
 social_distancing = run.SocialDistancePolicies[0]
 risk = run.NumberOfRisks - 1
-age_group = None
+age_group = (0,1,2,3,4)
 location = 35620
 index = run.get_outcome(outcome,scenario,school_policy,social_distancing,risk,age_group,location)
-
-print(f'{index.shape}')
+#print(f'{index}')
 #index.plot()
 #plt.show()
